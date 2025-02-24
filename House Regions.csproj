@@ -29,11 +29,11 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="TShock" Version="5.2.0" />
+    <PackageReference Include="TShock" Version="5.2.2" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Plugin Common Lib 4.2.0">
-      <HintPath>..\PluginCommonLibrary\bin\x64\Release\net6.0\Plugin Common Lib 4.2.0.dll</HintPath>
+      <HintPath>bin\x64\Release\net6.0\Plugin Common Lib 4.2.0.dll</HintPath>
     </Reference>
   </ItemGroup>
   <PropertyGroup />
