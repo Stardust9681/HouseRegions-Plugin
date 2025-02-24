@@ -97,6 +97,9 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			if (string.IsNullOrWhiteSpace(owner)) throw new ArgumentException();
 			if (!(houseIndex > 0)) throw new ArgumentOutOfRangeException();
 
+			//Disable chat tags
+			owner = owner.Replace("[", "(");
+
 			return string.Concat(
 			  HousingManager.HouseRegionNameAppendix, owner, HousingManager.HouseRegionNameNumberSeparator, houseIndex
 			);
