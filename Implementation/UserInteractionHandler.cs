@@ -1021,11 +1021,24 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			Region region;
 			if (!this.TryGetAccessibleHouseRegionAtPlayer(args.Player, out region))
 				return;
+			if (!HousingManager.TryGetHouseRegionData(region.Name, out string owner, out int index))
+				return;
 
 			if (!TShock.Regions.DeleteRegion(region.Name))
 			{
 				args.Player.SendErrorMessage("Internal error has occured.");
 				return;
+			}
+
+			//Attempt to update later region names to aptly reflect region count
+			foreach (Region reg in TShock.Regions.Regions)
+			{
+				if (!HousingManager.TryGetHouseRegionData(reg.Name, out string o, out int i))
+					continue;
+				if (o.Equals(owner) && i > index)
+				{
+					reg.Name = HousingManager.ToHouseRegionName(o, i-1);
+				}
 			}
 
 			args.Player.SendSuccessMessage("The house was successfully deleted.");
