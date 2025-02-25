@@ -422,9 +422,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			Region region;
 			if (!this.TryGetHouseRegionAtPlayer(args.Player, out owner, out region))
 				return;
-
+			if (!HousingManager.TryGetHouseRegionData(region.Name, out _, out int index))
+				return;
 			List<string> lines = new List<string>() {
-				"Owned by: " + owner
+				$"Owned by: {owner} ({index})",
 			};
 
 			if (region.AllowedIDs.Count > 0)
@@ -515,7 +516,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				args.Player.SendErrorMessage($"Proper syntax: /house data {expectedName} <Index>");
 				return;
 			}
-			if (houseIndex < 1 || houseIndex > TShock.Regions.Regions.Count)
+			if (houseIndex < 1)
 			{
 				args.Player.SendErrorMessage($"Invalid house index. Should be: Index > 1");
 				return;
