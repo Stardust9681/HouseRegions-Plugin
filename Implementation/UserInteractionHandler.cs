@@ -507,11 +507,17 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				return;
 			}
 
+			//I love how the implementation of this plugin makes you ignore the 0-index parameter
 			string expectedName = args.Parameters[1];
 			string index = args.Parameters[2];
 			if (!int.TryParse(index, out int houseIndex))
 			{
 				args.Player.SendErrorMessage($"Proper syntax: /house data {expectedName} <Index>");
+				return;
+			}
+			if (houseIndex < 1 || houseIndex > TShock.Regions.Regions.Count)
+			{
+				args.Player.SendErrorMessage($"Invalid house index. Should be: Index > 1");
 				return;
 			}
 			string regionName = HousingManager.ToHouseRegionName(expectedName, houseIndex);
@@ -522,7 +528,9 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					
 					List<string> lines = new List<string>() {
 						$"Owned by: {expectedName} (last login: {DateTime.Parse(TShock.UserAccounts.GetUserAccountByName(expectedName).LastAccessed)})",
-						$"Location: ({region.Area.X*16}, {region.Area.Y*16}) // Size: [{region.Area.Width}, {region.Area.Height}]",
+						//Apparently tShock regions use World Coords for X/Y, but Tile Space for Width/Height
+						//Which, yes those are the two I want here, but also wth tShock
+						$"Location: ({region.Area.X}, {region.Area.Y}) // Size: [{region.Area.Width}, {region.Area.Height}]",
 					};
 					if(region.AllowedIDs.Count > 0)
 						lines.Add($"Shared with {region.AllowedIDs.Count} players");
@@ -538,6 +546,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					return;
 				}
 			}
+			args.Player.SendErrorMessage($"Did not find house with owner name or matching index");
 		}
 		private void HouseDataCommand_HelpCallback(CommandArgs args)
 		{
@@ -552,7 +561,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			{
 				default:
 					args.Player.SendMessage("Command reference for /house data (Page 1 of 1)", Color.Lime);
-					args.Player.SendMessage("/house summary <Owner> <Index>", Color.White);
+					args.Player.SendMessage("/house summary <Owner> <Index (1..)>", Color.White);
 					args.Player.SendMessage("Displays information about the region with the given name and index.", Color.LightGray);
 					return;
 			}

@@ -15,12 +15,26 @@
   -->
   <MaxHousesPerUser>10</MaxHousesPerUser>
 
+  <!--
+    Rejects based off whichever is greater: Width, Height, or TotalTiles
+    Assume: TotalTiles=25, Width=8, Height=4
+    If house defined with size [7, 4] (28), rejects because width
+    If house defined with size [8, 3] (24), rejects because total tiles (and also height)
+    If house defined with size [4, 5], rejects because total tiles (and also width, and also height)
+  -->
   <MinHouseSize>
     <TotalTiles>25</TotalTiles>
     <Width>8</Width>
     <Height>4</Height>
   </MinHouseSize>
   
+  <!--
+    Rejects based off whichever is lesser: Width, Height, or TotalTiles
+    Assume: TotalTiles=7500, Width=150, Height=150
+    If house defined with size [155, 20] (3100), rejects because width
+    If house defined with size [150, 155] (23250), rejects because total tiles (and also height)
+    If house defined with size [155, 155] (24025), rejects because total tiles (and also width, and also height)
+  -->
   <MaxHouseSize>
     <TotalTiles>7500</TotalTiles>
     <Width>150</Width>
@@ -30,10 +44,10 @@
   <!--
     Whether house regions can overlap with TShock regions or not.
       
-    NOTE: House regions can never overlap with other house regions as long as the owner differs.
-          They can always overlap with TShock regions if the TShock region's name is prefixed with a star (*), independent  
-          of this setting.
-          Housing regions can never overlap, except they're owned by the same user.
+    NOTE:
+          House regions CANNOT overlap when owned by different users (but CAN when owned by the same user)
+          They can always overlap with TShock regions if the TShock region's name is prefixed with a star (*),
+          independent of this setting.
   -->
   <AllowTShockRegionOverlapping>false</AllowTShockRegionOverlapping>
 

@@ -227,8 +227,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		public bool CheckHouseRegionValidSize(Rectangle regionArea)
 		{
-			Configuration.HouseSizeConfig dummy;
-			return this.CheckHouseRegionValidSize(regionArea, out dummy);
+			return this.CheckHouseRegionValidSize(regionArea, out _);
 		}
 	}
 }

@@ -25,11 +25,11 @@ Grab the latest release and put the _.dll_ files into your server's _ServerPlugi
 | ------------ | -------------------- | ----------- |
 | /house | `None` | Introduction to this plugin |
 | /house commands | `None` | Shows the list of this plugin's commands |
-| /house summary | `houseregions.housingmaster` | Shows a list of all defined houses |
+| /house summary | `houseregions.housingmaster` | Shows a list of all house owners |
 | /house info | `None` | Shows information about a house |
 | /house data | `houseregions.housingmaster` | Shows information about a house by name |
 | /house define | `houseregions.define` | Creates a new house |
-| /house resize <up\|down\|left\|right> <amount> | `houseregions.define` | Resizes a house (up/down/left/right) by a given amount |
+| /house resize <up\|down\|left\|right> <amount> | `houseregions.define` | Resizes a house (up/down/left/right) by a given amount (inlcuding negatives) |
 | /house share <user> | `houseregions.share` | Shares a house with a given user |
 | /house unshare <user> | `houseregions.share` | Revokes access from a given user |
 | /house shareGroup <group> | `houseregions.sharegroup` | Shares a house with a given group |
