@@ -40,8 +40,8 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		public const string CurrentVersion = "1.0";
 
 		public int MaxHousesPerUser { get; set; }
-		public HouseSizeConfig MinSize { get; set; }
-		public HouseSizeConfig MaxSize { get; set; }
+		public IHouseSizeRestraint MinSize { get; set; }
+		public IHouseSizeRestraint MaxSize { get; set; }
 		public bool AllowTShockRegionOverlapping { get; set; }
 		public int DefaultZIndex { get; set; }
 

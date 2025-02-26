@@ -3,7 +3,7 @@ Configuration
 
 ## Config File
 A config file will be automatically created when this plugin is loaded for the first time. To access it, navigate to your local tShock install folder (directory), open to `../tshock/House Regions/`. If this is working correctly, you should find a file, `HouseConfig.json`.
-If you used a previous version of this plugin, you may also find `Config.xml`. Once this plugin has loaded the new file (it will carry over your existing settings), `Config.xml` may be safely removed.
+If you used a previous version of this plugin, you may also find `Config.xml`. This config is deprecated, and it is recommended you begin using `HouseConfig.json` instead. `Config.xml` may be safely removed at any time, and should not reappear after doing so.
 
 ## Config Fields
 Inside the config file you will find a number of settings. The following explains in detail what each is used for, and how it works.

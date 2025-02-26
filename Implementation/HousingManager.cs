@@ -55,10 +55,11 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		public void CreateHouseRegion(UserAccount user, Group group, Rectangle area, bool checkOverlaps = true, bool checkPermissions = false, bool checkDefinePermission = false)
 		{
-			if (user == null) throw new ArgumentNullException();
+            Console.WriteLine("A");
+            if (user == null) throw new ArgumentNullException();
 			if (group == null) throw new ArgumentNullException();
 			if (!(area.Width > 0 && area.Height > 0)) throw new ArgumentException();
-
+			Console.WriteLine("B");
 			int maxHouses = int.MaxValue;
 			if (checkPermissions)
 			{
@@ -75,10 +76,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 						throw new InvalidHouseSizeException(restrictingSizeConfig);
 				}
 			}
-
+			Console.WriteLine("C");
 			if (checkOverlaps && this.CheckHouseRegionOverlap(user.Name, area))
 				throw new HouseOverlapException();
-
+			Console.WriteLine("D");
 			// Find a free house index.
 			int houseIndex;
 			string houseName = null;
@@ -88,14 +89,16 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				if (TShock.Regions.GetRegionByName(houseName) == null)
 					break;
 			}
+			Console.WriteLine("E");
 			if (houseIndex > maxHouses)
 				throw new LimitEnforcementException("Max amount of houses reached.");
-
+			Console.WriteLine("F");
 			if (!TShock.Regions.AddRegion(
 			  area.X, area.Y, area.Width, area.Height, houseName, user.Name, Main.worldID.ToString(),
 			  this.HRConfig.DefaultZIndex
 			))
 				throw new InvalidOperationException("House region might already exist.");
+			Console.WriteLine("G");
 		}
 
 		public string ToHouseRegionName(string owner, int houseIndex)

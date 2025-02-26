@@ -119,11 +119,11 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			}
 
 			bool existingConfig = false;
-			if (File.Exists(HouseRegionsPlugin.ConfigFilePath))
+			if (File.Exists(ConfigFilePath))
 			{
 				try
 				{
-					this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
+					this.Config = Configuration.Read(ConfigFilePath);
 					existingConfig = true;
 				}
 				catch (Exception ex)
@@ -136,7 +136,9 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					return false;
 				}
 			}
-			else if(!File.Exists(ConfigurationFile.FilePath))
+			//Do not create xml config
+			//Do not pass go
+			/*else if(!File.Exists(ConfigurationFile.FilePath))
 			{
 				var assembly = Assembly.GetExecutingAssembly();
 				string resourceNamexml = assembly.GetManifestResourceNames().Single(str => str.EndsWith("Config.xml"));
@@ -147,7 +149,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				xsddoc.Save(DataDirectory + "/Config.xsd");
 
 				this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
-			}
+			}*/
 
 			_cFile = new ConfigurationFile();
 			if (!_cFile.TryRead(ConfigurationFile.FilePath, out HouseRegionConfig config))
@@ -175,6 +177,16 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			}
 			HRConfig = config;
 
+			//Backwards compat (oops should have been last commit oh well)
+			Config = new Configuration()
+			{
+				MaxHousesPerUser = HRConfig.MaxHousesPerUser,
+				MinSize = HRConfig.MinSize,
+				MaxSize = HRConfig.MaxSize,
+				AllowTShockRegionOverlapping = HRConfig.AllowTShockRegionOverlapping,
+				DefaultZIndex = HRConfig.DefaultZIndex
+			};
+
 			return true;
 		}
 
@@ -195,13 +207,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 						updatedXmlConfig = true;
 					}
 				}
-
-				this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
-				this.HousingManager.Config = this.Config;
-
+				
 				if (updatedXmlConfig)
 				{
-					_cFile.Settings = new HouseRegionConfig(Config);
+					_cFile.Settings = new HouseRegionConfig(Configuration.Read(HouseRegionsPlugin.ConfigFilePath));
 					_cFile.Write(ConfigurationFile.FilePath);
 					HRConfig = _cFile.Settings;
 				}
@@ -210,8 +219,18 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					HRConfig = config;
 				}
 
+				this.Config = new Configuration()
+				{
+					MaxHousesPerUser = HRConfig.MaxHousesPerUser,
+					MinSize = HRConfig.MinSize,
+					MaxSize = HRConfig.MaxSize,
+					AllowTShockRegionOverlapping = HRConfig.AllowTShockRegionOverlapping,
+					DefaultZIndex = HRConfig.DefaultZIndex
+				};
+
 				return this.Config;
 			};
+
 			this.UserInteractionHandler = new UserInteractionHandler(
 			  this.Trace, this.PluginInfo, this.Config, this.HousingManager, reloadConfiguration
 			);

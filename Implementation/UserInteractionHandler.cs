@@ -1043,7 +1043,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					continue;
 				if (o.Equals(owner) && i > index)
 				{
-					reg.Name = HousingManager.ToHouseRegionName(o, i-1);
+					TShock.Regions.RenameRegion(reg.Name, HousingManager.ToHouseRegionName(o, i - 1));
 				}
 			}
 
