@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+
 using Terraria.Plugins.Common;
 using Terraria.Plugins.Common.Hooks;
-
+using Microsoft.Xna.Framework;
 using TerrariaApi.Server;
 using TShockAPI;
+using TShockAPI.DB;
 
 namespace Terraria.Plugins.CoderCow.HouseRegions
 {
@@ -37,6 +39,17 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		protected GetDataHookHandler GetDataHookHandler { get; private set; }
 		protected UserInteractionHandler UserInteractionHandler { get; private set; }
 		public HousingManager HousingManager { get; private set; }
+
+		//Literally all you had to do, tShock
+		//Now instead I'm having to do reflection to get this to work
+		public static IReadOnlyDictionary<int, TShockAPI.GetDataHandlers.LiquidType> ProjectilesAffectLiquid { get; private set; }
+		public static IReadOnlyDictionary<GetDataHandlers.LiquidType, Utils.TileActionAttempt> Delegates = new Dictionary<GetDataHandlers.LiquidType, Utils.TileActionAttempt>()
+		{
+			[GetDataHandlers.LiquidType.Water] = DelegateMethods.SpreadWater,
+			[GetDataHandlers.LiquidType.Lava] = DelegateMethods.SpreadLava,
+			[GetDataHandlers.LiquidType.Honey] = DelegateMethods.SpreadHoney,
+			[GetDataHandlers.LiquidType.Removal] = DelegateMethods.SpreadDry,
+		};
 
 
 		public HouseRegionsPlugin(Main game) : base(game)
@@ -72,6 +85,8 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 			if (!this.InitConfig())
 				return;
+
+			ProjectilesAffectLiquid = (Dictionary<int, GetDataHandlers.LiquidType>)typeof(GetDataHandlers).GetField("projectileCreatesLiquid", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
 
 			this.HousingManager = new HousingManager(this.Trace, this.Config);
 			this.InitUserInteractionHandler();
@@ -139,6 +154,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			this.GetDataHookHandler = new GetDataHookHandler(this, true);
 			this.GetDataHookHandler.InvokeTileEditOnMasswireOperation = GetDataHookHandler.MassWireOpTileEditInvokeType.AlwaysPlaceWire;
 			this.GetDataHookHandler.TileEdit += this.Net_TileEdit;
+			On.Terraria.Liquid.AddWater += Liquid_AddWater;
+			On.Terraria.Liquid.SettleWaterAt += Liquid_SettleWaterAt;
+			//On.Terraria.Liquid.LiquidCheck += Liquid_LiquidCheck;
+			On.Terraria.Projectile.Kill += Projectile_Kill;
 		}
 
 		private void RemoveHooks()
@@ -146,6 +165,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			this.GetDataHookHandler?.Dispose();
 
 			ServerApi.Hooks.GamePostInitialize.Deregister(this, this.Game_PostInitialize);
+			On.Terraria.Liquid.AddWater -= Liquid_AddWater;
+			On.Terraria.Liquid.SettleWaterAt -= Liquid_SettleWaterAt;
+			//On.Terraria.Liquid.LiquidCheck -= Liquid_LiquidCheck;
+			On.Terraria.Projectile.Kill -= Projectile_Kill;
 		}
 
 		private void Net_TileEdit(object sender, TileEditEventArgs e)
@@ -154,6 +177,78 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				return;
 
 			e.Handled = this.UserInteractionHandler.HandleTileEdit(e.Player, e.EditType, e.BlockType, e.Location, e.ObjectStyle);
+		}
+		//Not technically a user interaction
+		private bool IsOnEdgeOfHouse(int x, int y)
+		{
+			static Rectangle ResizeBounds(Rectangle orig, int resize)
+			{
+				return new Rectangle(orig.X - resize, orig.Y - resize, orig.Width + (2 * resize), orig.Height + (2 * resize));
+			}
+			return TShock.Regions.Regions.Any(
+				(Region r) => HousingManager.IsHouseRegion(r.Name) && !r.InArea(x, y) && ResizeBounds(r.Area, 2).Contains(x, y)
+			);
+		}
+		private void Liquid_AddWater(On.Terraria.Liquid.orig_AddWater orig, int x, int y)
+		{
+			if (this.isDisposed || !this.hooksEnabled)
+				return;
+
+			if (!IsOnEdgeOfHouse(x, y))
+			{
+				orig.Invoke(x, y);
+			}
+		}
+		private void Liquid_SettleWaterAt(On.Terraria.Liquid.orig_SettleWaterAt orig, int x, int y)
+		{
+			if (this.isDisposed || !this.hooksEnabled)
+				return;
+
+			if (!IsOnEdgeOfHouse(x, y))
+			{
+				orig.Invoke(x, y);
+			}
+		}
+		private void Liquid_LiquidCheck(On.Terraria.Liquid.orig_LiquidCheck orig, int x, int y, int thisLiquidType)
+		{
+			if (this.isDisposed || !this.hooksEnabled)
+				return;
+
+			if (!IsOnEdgeOfHouse(x, y))
+			{
+				orig.Invoke(x, y, thisLiquidType);
+			}
+		}
+
+		private static Utils.TileActionAttempt WithPermissionCheck(Utils.TileActionAttempt action, TSPlayer player)
+		{
+			return (int x, int y) => player.HasBuildPermission(x, y) && action.Invoke(x, y);
+		}
+
+		private void Projectile_Kill(On.Terraria.Projectile.orig_Kill orig, Projectile self)
+		{
+			if (ProjectilesAffectLiquid.Keys.Contains(self.type))
+			{
+				self.Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricks(
+					self.Center.ToTileCoordinates(),
+					3f,
+					WithPermissionCheck(Delegates[ProjectilesAffectLiquid[self.type]], TShock.Players[self.owner])
+				);
+				self.active = false;
+				self.netUpdate = true;
+			}
+			else if (self.type is ID.ProjectileID.DirtBomb or ID.ProjectileID.DirtStickyBomb)
+			{
+				self.Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricks(
+					self.Center.ToTileCoordinates(),
+					3f,
+					WithPermissionCheck(DelegateMethods.SpreadDirt, TShock.Players[self.owner])
+				);
+				self.active = false;
+				self.netUpdate = true;
+			}
+			else
+				orig.Invoke(self);
 		}
 		#endregion
 

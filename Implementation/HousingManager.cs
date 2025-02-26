@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Mysqlx.Crud;
 using Terraria.Plugins.Common;
 
 using TShockAPI;
@@ -169,9 +170,22 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		public bool IsHouseRegion(string regionName)
 		{
-			string dummy;
-			int dummy2;
-			return this.TryGetHouseRegionData(regionName, out dummy, out dummy2);
+			if (regionName == null) throw new ArgumentNullException();
+
+			if (!regionName.StartsWith(HousingManager.HouseRegionNameAppendix))
+				return false;
+
+			int separatorIndex = regionName.LastIndexOf(HousingManager.HouseRegionNameNumberSeparator);
+			if (
+			  separatorIndex == -1 || separatorIndex == regionName.Length - 1 ||
+			  separatorIndex <= HousingManager.HouseRegionNameAppendix.Length
+			)
+				return false;
+
+			string houseIndexRaw = regionName.Substring(separatorIndex + 1);
+			if (!int.TryParse(houseIndexRaw, out _))
+				return false;
+			return true;
 		}
 
 		public bool CheckHouseRegionOverlap(string owner, Rectangle regionArea)
