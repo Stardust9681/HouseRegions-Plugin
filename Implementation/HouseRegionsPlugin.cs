@@ -12,6 +12,8 @@ using Microsoft.Xna.Framework;
 using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.DB;
+using static Org.BouncyCastle.Math.EC.ECCurve;
+using TShockAPI.Configuration;
 
 namespace Terraria.Plugins.CoderCow.HouseRegions
 {
@@ -35,10 +37,19 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		private bool hooksEnabled;
 		internal PluginTrace Trace { get; }
 		protected PluginInfo PluginInfo { get; }
+		/// <summary>
+		/// [DEPRECATED] Please use <see cref="HRConfig"/> instead
+		/// </summary>
+		[Obsolete]
 		protected Configuration Config { get; private set; }
 		protected GetDataHookHandler GetDataHookHandler { get; private set; }
 		protected UserInteractionHandler UserInteractionHandler { get; private set; }
 		public HousingManager HousingManager { get; private set; }
+
+		#region New Config
+		private ConfigurationFile _cFile;
+		public static HouseRegionConfig HRConfig { get; private set; }
+		#endregion
 
 		//Literally all you had to do, tShock
 		//Now instead I'm having to do reflection to get this to work
@@ -96,11 +107,13 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		private bool InitConfig()
 		{
+			bool existingConfig = false;
 			if (File.Exists(HouseRegionsPlugin.ConfigFilePath))
 			{
 				try
 				{
 					this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
+					existingConfig = true;
 				}
 				catch (Exception ex)
 				{
@@ -112,7 +125,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					return false;
 				}
 			}
-			else
+			else if(!File.Exists(ConfigurationFile.FilePath))
 			{
 				var assembly = Assembly.GetExecutingAssembly();
 				string resourceNamexml = assembly.GetManifestResourceNames().Single(str => str.EndsWith("Config.xml"));
@@ -123,6 +136,33 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				xsddoc.Save(DataDirectory + "/Config.xsd");
 
 				this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
+			}
+
+			_cFile = new ConfigurationFile();
+			if (!_cFile.TryRead(ConfigurationFile.FilePath, out HouseRegionConfig config))
+			{
+				if (config is default(HouseRegionConfig))
+				{
+					Directory.CreateDirectory(ConfigurationFile.DirectoryPath);
+					if (existingConfig)
+					{
+						_cFile.Settings = new HouseRegionConfig()
+						{
+							MaxHousesPerUser = Config.MaxHousesPerUser,
+							MinSize = Config.MinSize,
+							MaxSize = Config.MaxSize,
+							AllowTShockRegionOverlapping = Config.AllowTShockRegionOverlapping,
+							DefaultZIndex = Config.DefaultZIndex
+						};
+					}
+					else
+					{
+						_cFile.Settings = new HouseRegionConfig();
+					}
+					_cFile.Write(ConfigurationFile.FilePath);
+					_cFile.TryRead(ConfigurationFile.FilePath, out config);
+				}
+				HRConfig = config;
 			}
 
 			return true;
@@ -136,6 +176,8 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 				this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
 				this.HousingManager.Config = this.Config;
+
+				HRConfig = _cFile.Read(ConfigurationFile.FilePath, out bool _);
 
 				return this.Config;
 			};
@@ -190,9 +232,12 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		private void Liquid_AddWater(On.Terraria.Liquid.orig_AddWater orig, int x, int y)
 		{
 			if (this.isDisposed || !this.hooksEnabled)
+			{
+				orig.Invoke(x, y);
 				return;
+			}
 
-			if (!IsOnEdgeOfHouse(x, y))
+			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(x, y))
 			{
 				orig.Invoke(x, y);
 			}
@@ -200,9 +245,12 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		private void Liquid_SettleWaterAt(On.Terraria.Liquid.orig_SettleWaterAt orig, int x, int y)
 		{
 			if (this.isDisposed || !this.hooksEnabled)
+			{
+				orig.Invoke(x, y);
 				return;
+			}
 
-			if (!IsOnEdgeOfHouse(x, y))
+			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(x, y))
 			{
 				orig.Invoke(x, y);
 			}
@@ -213,6 +261,12 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				=> player.HasBuildPermission(x, y) && action.Invoke(x, y);
 		private void Projectile_Kill(On.Terraria.Projectile.orig_Kill orig, Projectile self)
 		{
+			if (this.isDisposed || !this.hooksEnabled || !HRConfig.HouseLiquidProtection)
+			{
+				orig.Invoke(self);
+				return;
+			}
+
 			if (ProjectilesAffectLiquid.Keys.Contains(self.type))
 			{
 				self.Kill_DirtAndFluidProjectiles_RunDelegateMethodPushUpForHalfBricks(

@@ -19,6 +19,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		public PluginTrace Trace { get; private set; }
 
+		/// <summary>
+		/// [DEPRECATED] Please use <see cref="HRConfig"/> instead
+		/// </summary>
+		[Obsolete]
 		public Configuration Config
 		{
 			get { return this.config; }
@@ -28,6 +32,8 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				this.config = value;
 			}
 		}
+
+		public HouseRegionConfig HRConfig => HouseRegionsPlugin.HRConfig;
 
 
 		public HousingManager(PluginTrace trace, Configuration config)
@@ -47,7 +53,6 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			this.CreateHouseRegion(player.Account, player.Group, area, checkOverlaps, checkPermissions, checkDefinePermission);
 		}
 
-
 		public void CreateHouseRegion(UserAccount user, Group group, Rectangle area, bool checkOverlaps = true, bool checkPermissions = false, bool checkDefinePermission = false)
 		{
 			if (user == null) throw new ArgumentNullException();
@@ -62,10 +67,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 				if (!group.HasPermission(HouseRegionsPlugin.NoLimits_Permission))
 				{
-					if (this.Config.MaxHousesPerUser > 0)
-						maxHouses = this.Config.MaxHousesPerUser;
+					if (HRConfig.MaxHousesPerUser > 0)
+						maxHouses = HRConfig.MaxHousesPerUser;
 
-					Configuration.HouseSizeConfig restrictingSizeConfig;
+					IHouseSizeRestraint restrictingSizeConfig;
 					if (!this.CheckHouseRegionValidSize(area, out restrictingSizeConfig))
 						throw new InvalidHouseSizeException(restrictingSizeConfig);
 				}
@@ -88,7 +93,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 			if (!TShock.Regions.AddRegion(
 			  area.X, area.Y, area.Width, area.Height, houseName, user.Name, Main.worldID.ToString(),
-			  this.Config.DefaultZIndex
+			  this.HRConfig.DefaultZIndex
 			))
 				throw new InvalidOperationException("House region might already exist.");
 		}
@@ -122,7 +127,6 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			houseIndex = -1;
 			return false;
 		}
-
 
 		public bool TryGetHouseRegionData(string regionName, out string owner, out int houseIndex)
 		{
@@ -203,7 +207,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				int houseIndex;
 				if (!this.TryGetHouseRegionData(tsRegion.Name, out houseOwner, out houseIndex))
 				{
-					if (this.Config.AllowTShockRegionOverlapping || tsRegion.Name.StartsWith("*"))
+					if (HRConfig.AllowTShockRegionOverlapping || tsRegion.Name.StartsWith("*"))
 						continue;
 
 					return true;
@@ -217,21 +221,21 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			return false;
 		}
 
-		public bool CheckHouseRegionValidSize(Rectangle regionArea, out Configuration.HouseSizeConfig problematicConfig)
+		public bool CheckHouseRegionValidSize(Rectangle regionArea, out IHouseSizeRestraint problematicConfig)
 		{
 			int areaTotalTiles = regionArea.Width * regionArea.Height;
 
-			problematicConfig = this.Config.MinSize;
+			problematicConfig = HRConfig.MinSize;
 			if (
-			  regionArea.Width < this.Config.MinSize.Width || regionArea.Height < this.Config.MinSize.Height ||
-			  areaTotalTiles < this.Config.MinSize.TotalTiles
+			  regionArea.Width < HRConfig.MinSize.Width || regionArea.Height < HRConfig.MinSize.Height ||
+			  areaTotalTiles < HRConfig.MinSize.TotalTiles
 			)
 				return false;
 
-			problematicConfig = this.Config.MaxSize;
+			problematicConfig = HRConfig.MaxSize;
 			if (
-			  regionArea.Width > this.Config.MaxSize.Width || regionArea.Height > this.Config.MaxSize.Height ||
-			  areaTotalTiles > this.Config.MaxSize.TotalTiles
+			  regionArea.Width > HRConfig.MaxSize.Width || regionArea.Height > HRConfig.MaxSize.Height ||
+			  areaTotalTiles > HRConfig.MaxSize.TotalTiles
 			)
 				return false;
 

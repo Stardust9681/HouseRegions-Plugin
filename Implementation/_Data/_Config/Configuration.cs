@@ -10,11 +10,11 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 	public class Configuration
 	{
 		#region [Nested: HouseSizeConfig]
-		public struct HouseSizeConfig
+		public struct HouseSizeConfig : IHouseSizeRestraint
 		{
-			public int TotalTiles { get; private set; }
-			public int Width { get; private set; }
-			public int Height { get; private set; }
+			public int TotalTiles { get; set; }
+			public int Width { get; set; }
+			public int Height { get; set; }
 
 
 			public static HouseSizeConfig FromXmlElement(XmlElement rootElement)

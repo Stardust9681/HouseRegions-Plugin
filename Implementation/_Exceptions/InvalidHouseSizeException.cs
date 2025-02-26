@@ -7,9 +7,9 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 	public class InvalidHouseSizeException : Exception
 	{
 		#region [Property: RestrictingConfig]
-		private readonly Configuration.HouseSizeConfig restrictingConfig;
+		private readonly IHouseSizeRestraint restrictingConfig;
 
-		public Configuration.HouseSizeConfig RestrictingConfig
+		public IHouseSizeRestraint RestrictingConfig
 		{
 			get { return this.restrictingConfig; }
 		}
@@ -17,7 +17,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		public InvalidHouseSizeException(string message, Exception inner = null) : base(message, inner) { }
 
-		public InvalidHouseSizeException(Configuration.HouseSizeConfig restrictingConfig) : base("The size of the house does not match with the configured min / max settings.")
+		public InvalidHouseSizeException(IHouseSizeRestraint restrictingConfig) : base("The size of the house does not match with the configured min / max settings.")
 		{
 			this.restrictingConfig = restrictingConfig;
 		}

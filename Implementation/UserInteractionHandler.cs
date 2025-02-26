@@ -45,9 +45,15 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		#endregion
 
 		protected PluginInfo PluginInfo { get; private set; }
+		/// <summary>
+		/// [DEPRECATED] Please use <see cref="HRConfig"/> instead
+		/// </summary>
+		[Obsolete]
 		protected Configuration Config { get; private set; }
 		protected HousingManager HousingManager { get; private set; }
 		protected Func<Configuration> ReloadConfigurationCallback { get; private set; }
+
+		public HouseRegionConfig HRConfig => HouseRegionsPlugin.HRConfig;
 
 
 		public UserInteractionHandler(
@@ -106,7 +112,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			}
 
 			string statsMessage = string.Format(
-			  "You've defined {0} of {1} possible houses so far.", playerHouseCount, this.Config.MaxHousesPerUser
+			  "You've defined {0} of {1} possible houses so far.", playerHouseCount, this.HRConfig.MaxHousesPerUser
 			);
 			args.Player.SendMessage(statsMessage, Color.Yellow);
 			args.Player.SendMessage("Type \"/house commands\" to get a list of available commands.", Color.Yellow);
@@ -792,7 +798,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 						}
 						catch (HouseOverlapException)
 						{
-							if (this.Config.AllowTShockRegionOverlapping)
+							if (this.HRConfig.AllowTShockRegionOverlapping)
 							{
 								playerLocal.SendErrorMessage("The house would overlap with another house where you're not the owner of.");
 							}
@@ -806,7 +812,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 						{
 							playerLocal.SendErrorMessage(
 							  "You have reached the maximum of {0} houses. Delete at least one of your other houses first.",
-							  this.Config.MaxHousesPerUser
+							  this.HRConfig.MaxHousesPerUser
 							);
 						}
 					}
@@ -927,7 +933,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			if (newArea.Height < 0)
 				newArea.Height = 1;
 
-			Configuration.HouseSizeConfig restrictingSizeConfig;
+			IHouseSizeRestraint restrictingSizeConfig;
 			if (!this.HousingManager.CheckHouseRegionValidSize(newArea, out restrictingSizeConfig))
 			{
 				this.ExplainInvalidRegionSize(args.Player, newArea, restrictingSizeConfig);
@@ -936,7 +942,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 			if (this.HousingManager.CheckHouseRegionOverlap(owner, newArea))
 			{
-				if (this.Config.AllowTShockRegionOverlapping)
+				if (this.HRConfig.AllowTShockRegionOverlapping)
 				{
 					args.Player.SendErrorMessage("The house region would overlap either with another house not owned by you or");
 					args.Player.SendErrorMessage("with a TShock region.");
@@ -1489,9 +1495,9 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			this.SendFakeTileWire(player, crossLocation.OffsetEx(0, 1));
 		}
 
-		private void ExplainInvalidRegionSize(TSPlayer toPlayer, Rectangle area, Configuration.HouseSizeConfig restrictingConfig)
+		private void ExplainInvalidRegionSize(TSPlayer toPlayer, Rectangle area, IHouseSizeRestraint restrictingConfig)
 		{
-			if (restrictingConfig.Equals(this.Config.MinSize))
+			if (restrictingConfig.Equals(this.HRConfig.MinSize))
 			{
 				toPlayer.SendErrorMessage("This region has no valid house size, it's too small:");
 				toPlayer.SendErrorMessage("Min width: {0} (you've tried to set {1}).", restrictingConfig.Width, area.Width);
