@@ -156,7 +156,6 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			this.GetDataHookHandler.TileEdit += this.Net_TileEdit;
 			On.Terraria.Liquid.AddWater += Liquid_AddWater;
 			On.Terraria.Liquid.SettleWaterAt += Liquid_SettleWaterAt;
-			//On.Terraria.Liquid.LiquidCheck += Liquid_LiquidCheck;
 			On.Terraria.Projectile.Kill += Projectile_Kill;
 		}
 
@@ -167,7 +166,6 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			ServerApi.Hooks.GamePostInitialize.Deregister(this, this.Game_PostInitialize);
 			On.Terraria.Liquid.AddWater -= Liquid_AddWater;
 			On.Terraria.Liquid.SettleWaterAt -= Liquid_SettleWaterAt;
-			//On.Terraria.Liquid.LiquidCheck -= Liquid_LiquidCheck;
 			On.Terraria.Projectile.Kill -= Projectile_Kill;
 		}
 
@@ -178,7 +176,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 			e.Handled = this.UserInteractionHandler.HandleTileEdit(e.Player, e.EditType, e.BlockType, e.Location, e.ObjectStyle);
 		}
-		//Not technically a user interaction
+		
 		private bool IsOnEdgeOfHouse(int x, int y)
 		{
 			static Rectangle ResizeBounds(Rectangle orig, int resize)
@@ -186,7 +184,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				return new Rectangle(orig.X - resize, orig.Y - resize, orig.Width + (2 * resize), orig.Height + (2 * resize));
 			}
 			return TShock.Regions.Regions.Any(
-				(Region r) => HousingManager.IsHouseRegion(r.Name) && !r.InArea(x, y) && ResizeBounds(r.Area, 2).Contains(x, y)
+				(Region r) => HousingManager.IsHouseRegion(r.Name) && !r.InArea(x, y) && ResizeBounds(r.Area, 1).Contains(x, y)
 			);
 		}
 		private void Liquid_AddWater(On.Terraria.Liquid.orig_AddWater orig, int x, int y)
@@ -209,22 +207,10 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				orig.Invoke(x, y);
 			}
 		}
-		private void Liquid_LiquidCheck(On.Terraria.Liquid.orig_LiquidCheck orig, int x, int y, int thisLiquidType)
-		{
-			if (this.isDisposed || !this.hooksEnabled)
-				return;
-
-			if (!IsOnEdgeOfHouse(x, y))
-			{
-				orig.Invoke(x, y, thisLiquidType);
-			}
-		}
 
 		private static Utils.TileActionAttempt WithPermissionCheck(Utils.TileActionAttempt action, TSPlayer player)
-		{
-			return (int x, int y) => player.HasBuildPermission(x, y) && action.Invoke(x, y);
-		}
-
+			=> (int x, int y)
+				=> player.HasBuildPermission(x, y) && action.Invoke(x, y);
 		private void Projectile_Kill(On.Terraria.Projectile.orig_Kill orig, Projectile self)
 		{
 			if (ProjectilesAffectLiquid.Keys.Contains(self.type))
