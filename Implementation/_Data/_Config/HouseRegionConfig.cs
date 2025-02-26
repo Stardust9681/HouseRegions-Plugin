@@ -18,6 +18,15 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 	}
 	public class HouseRegionConfig
 	{
+		public HouseRegionConfig() { }
+		public HouseRegionConfig(Configuration xml)
+		{
+			MaxHousesPerUser = xml.MaxHousesPerUser;
+			MinSize = xml.MinSize;
+			MaxSize = xml.MaxSize;
+			AllowTShockRegionOverlapping = xml.AllowTShockRegionOverlapping;
+			DefaultZIndex = xml.DefaultZIndex;
+		}
 		public struct HouseSizeConfig : IHouseSizeRestraint
 		{
 			public int TotalTiles { get; set; }

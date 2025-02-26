@@ -107,6 +107,17 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 
 		private bool InitConfig()
 		{
+			bool updatedXmlConfig = false;
+			if (File.Exists(ConfigFilePath) && File.Exists(ConfigurationFile.FilePath))
+			{
+				DateTime xmlAccessTime = File.GetLastAccessTime(HouseRegionsPlugin.ConfigFilePath);
+				DateTime jsonAccessTime = File.GetLastAccessTime(ConfigurationFile.FilePath);
+				if (jsonAccessTime < xmlAccessTime)
+				{
+					updatedXmlConfig = true;
+				}
+			}
+
 			bool existingConfig = false;
 			if (File.Exists(HouseRegionsPlugin.ConfigFilePath))
 			{
@@ -144,16 +155,9 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				if (config is default(HouseRegionConfig))
 				{
 					Directory.CreateDirectory(ConfigurationFile.DirectoryPath);
-					if (existingConfig)
+					if (existingConfig || updatedXmlConfig)
 					{
-						_cFile.Settings = new HouseRegionConfig()
-						{
-							MaxHousesPerUser = Config.MaxHousesPerUser,
-							MinSize = Config.MinSize,
-							MaxSize = Config.MaxSize,
-							AllowTShockRegionOverlapping = Config.AllowTShockRegionOverlapping,
-							DefaultZIndex = Config.DefaultZIndex
-						};
+						_cFile.Settings = new HouseRegionConfig(Config);
 					}
 					else
 					{
@@ -162,8 +166,14 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 					_cFile.Write(ConfigurationFile.FilePath);
 					_cFile.TryRead(ConfigurationFile.FilePath, out config);
 				}
-				HRConfig = config;
 			}
+			else if (updatedXmlConfig)
+			{
+				_cFile.Settings = new HouseRegionConfig(Config);
+				_cFile.Write(ConfigurationFile.FilePath);
+				_cFile.TryRead(ConfigurationFile.FilePath, out config);
+			}
+			HRConfig = config;
 
 			return true;
 		}
@@ -174,10 +184,31 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				if (this.isDisposed)
 					return null;
 
+				bool updatedXmlConfig = false;
+				if (File.Exists(ConfigFilePath) && File.Exists(ConfigurationFile.FilePath))
+				{
+					DateTime xmlAccessTime = File.GetLastAccessTime(HouseRegionsPlugin.ConfigFilePath);
+					DateTime jsonAccessTime = File.GetLastAccessTime(ConfigurationFile.FilePath);
+					if (jsonAccessTime < xmlAccessTime)
+					{
+						Console.WriteLine($"{xmlAccessTime} : {jsonAccessTime}");
+						updatedXmlConfig = true;
+					}
+				}
+
 				this.Config = Configuration.Read(HouseRegionsPlugin.ConfigFilePath);
 				this.HousingManager.Config = this.Config;
 
-				HRConfig = _cFile.Read(ConfigurationFile.FilePath, out bool _);
+				if (updatedXmlConfig)
+				{
+					_cFile.Settings = new HouseRegionConfig(Config);
+					_cFile.Write(ConfigurationFile.FilePath);
+					HRConfig = _cFile.Settings;
+				}
+				else if (_cFile.TryRead(ConfigurationFile.FilePath, out HouseRegionConfig config))
+				{
+					HRConfig = config;
+				}
 
 				return this.Config;
 			};
