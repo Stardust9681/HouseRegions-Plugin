@@ -248,6 +248,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			this.GetDataHookHandler.TileEdit += this.Net_TileEdit;
 			On.Terraria.Liquid.AddWater += Liquid_AddWater;
 			On.Terraria.Liquid.SettleWaterAt += Liquid_SettleWaterAt;
+			On.Terraria.Liquid.Update += Liquid_Update;
 			On.Terraria.Projectile.Kill += Projectile_Kill;
 		}
 
@@ -258,7 +259,22 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 			ServerApi.Hooks.GamePostInitialize.Deregister(this, this.Game_PostInitialize);
 			On.Terraria.Liquid.AddWater -= Liquid_AddWater;
 			On.Terraria.Liquid.SettleWaterAt -= Liquid_SettleWaterAt;
+			On.Terraria.Liquid.Update -= Liquid_Update;
 			On.Terraria.Projectile.Kill -= Projectile_Kill;
+		}
+
+		private void Liquid_Update(On.Terraria.Liquid.orig_Update orig, Liquid self)
+		{
+			if (this.isDisposed || !this.hooksEnabled || !HRConfig.HouseLiquidProtection)
+			{
+				orig.Invoke(self);
+				return;
+			}
+
+			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(self.x, self.y))
+			{
+				orig.Invoke(self);
+			}
 		}
 
 		private void Net_TileEdit(object sender, TileEditEventArgs e)
@@ -287,7 +303,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				return;
 			}
 
-			if (HRConfig.HouseLiquidProtection ^ !IsOnEdgeOfHouse(x, y))
+			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(x, y))
 			{
 				orig.Invoke(x, y);
 			}
@@ -300,7 +316,7 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 				return;
 			}
 
-			if (HRConfig.HouseLiquidProtection ^ !IsOnEdgeOfHouse(x, y))
+			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(x, y))
 			{
 				orig.Invoke(x, y);
 			}
