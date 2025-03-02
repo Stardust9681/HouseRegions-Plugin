@@ -281,26 +281,26 @@ namespace Terraria.Plugins.CoderCow.HouseRegions
 		}
 		private void Liquid_AddWater(On.Terraria.Liquid.orig_AddWater orig, int x, int y)
 		{
-			if (this.isDisposed || !this.hooksEnabled)
+			if (this.isDisposed || !this.hooksEnabled || !HRConfig.HouseLiquidProtection)
 			{
 				orig.Invoke(x, y);
 				return;
 			}
 
-			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(x, y))
+			if (HRConfig.HouseLiquidProtection ^ !IsOnEdgeOfHouse(x, y))
 			{
 				orig.Invoke(x, y);
 			}
 		}
 		private void Liquid_SettleWaterAt(On.Terraria.Liquid.orig_SettleWaterAt orig, int x, int y)
 		{
-			if (this.isDisposed || !this.hooksEnabled)
+			if (this.isDisposed || !this.hooksEnabled || !HRConfig.HouseLiquidProtection)
 			{
 				orig.Invoke(x, y);
 				return;
 			}
 
-			if (HRConfig.HouseLiquidProtection && !IsOnEdgeOfHouse(x, y))
+			if (HRConfig.HouseLiquidProtection ^ !IsOnEdgeOfHouse(x, y))
 			{
 				orig.Invoke(x, y);
 			}
